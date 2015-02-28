@@ -4,10 +4,6 @@
 
 #include <game/mapitems.h>
 
-#include <time.h>       /* clock_t, clock, CLOCKS_PER_SEC */
-#include <math.h>       /* sqrt */
-
-
 #include <game/server/entities/character.h>
 #include <game/server/entities/flag.h>
 #include <game/server/player.h>
@@ -19,7 +15,7 @@ CGameControllerCTF::CGameControllerCTF(class CGameContext *pGameServer)
 {
 	m_apFlags[0] = 0;
 	m_apFlags[1] = 0;
-	m_pGameType = "DOM";
+	m_pGameType = "DTF";
 	m_GameFlags = GAMEFLAG_TEAMS|GAMEFLAG_FLAGS;
 }
 
@@ -46,15 +42,6 @@ int CGameControllerCTF::OnCharacterDeath(class CCharacter *pVictim, class CPlaye
 {
 	IGameController::OnCharacterDeath(pVictim, pKiller, WeaponID);
 	int HadFlag = 0;
-/*
-clock_t t;
-  t = clock();
-  f = frequency_of_primes (99999);
-  t = clock() - t;
-  str_format(t,((float)t)/CLOCKS_PER_SEC, "thing='%d:%s'",
-*/
-//  printf ("It took me %d clicks (%f seconds).\n",t,((float)t)/CLOCKS_PER_SEC);
-// stop nonsense
 
 	// drop flags
 	for(int i = 0; i < 2; i++)
@@ -68,7 +55,6 @@ clock_t t;
 			F->m_DropTick = Server()->Tick();
 			F->m_pCarryingCharacter = 0;
 			F->m_Vel = vec2(0,0);
-			F->Reset();
 
 			if(pKiller && pKiller->GetTeam() != pVictim->GetPlayer()->GetTeam())
 				pKiller->m_Score++;
@@ -182,7 +168,7 @@ void CGameControllerCTF::Tick()
 		if(F->m_pCarryingCharacter)
 		{
 			// update flag position
-			F->m_Pos = F->m_pCarryingCharacter->m_Pos; // omgwtf
+			F->m_Pos = F->m_pCarryingCharacter->m_Pos;
 
 			if(m_apFlags[fi^1] && m_apFlags[fi^1]->m_AtStand)
 			{
@@ -210,51 +196,8 @@ void CGameControllerCTF::Tick()
 					//GameServer()->SendChat(-1, -2, aBuf);
 					for(int i = 0; i < 2; i++)
 						m_apFlags[i]->Reset();
-					if(m_aTeamscore[fi^1] == 100){
+
 					GameServer()->CreateSoundGlobal(SOUND_CTF_CAPTURE);
-					}
-					if(m_aTeamscore[fi^1] == 200){
-                                        GameServer()->CreateSoundGlobal(SOUND_CTF_CAPTURE);
-                                        }
-					if(m_aTeamscore[fi^1] == 300){
-                                        GameServer()->CreateSoundGlobal(SOUND_CTF_CAPTURE);
-					}
-                                        if(m_aTeamscore[fi^1] == 400){
-                                        GameServer()->CreateSoundGlobal(SOUND_CTF_CAPTURE);
-                                        }
-                                        if(m_aTeamscore[fi^1] == 500){
-                                        GameServer()->CreateSoundGlobal(SOUND_CTF_CAPTURE);
-                                        }
-                                        if(m_aTeamscore[fi^1] == 600){
-                                        GameServer()->CreateSoundGlobal(SOUND_CTF_CAPTURE);
-                                        }
-                                        if(m_aTeamscore[fi^1] == 700){
-                                        GameServer()->CreateSoundGlobal(SOUND_CTF_CAPTURE);
-                                        }
-                                        if(m_aTeamscore[fi^1] ==800){
-                                        GameServer()->CreateSoundGlobal(SOUND_CTF_CAPTURE);
-                                        }
-                                        if(m_aTeamscore[fi^1] == 900){
-                                        GameServer()->CreateSoundGlobal(SOUND_CTF_CAPTURE);
-                                        }
-
-                                        if(m_aTeamscore[fi^1] == 1000){
-                                        GameServer()->CreateSoundGlobal(SOUND_CTF_CAPTURE);
-                                        GameServer()->CreateSoundGlobal(SOUND_CTF_CAPTURE);
-                                        }
-					if(m_aTeamscore[fi^1] == 2000){
-                                        GameServer()->CreateSoundGlobal(SOUND_CTF_CAPTURE);
-                                        GameServer()->CreateSoundGlobal(SOUND_CTF_CAPTURE);
-                                        }
-
-
-
-
-
-
-
-
-
 				}
 			}
 		}
@@ -297,30 +240,28 @@ void CGameControllerCTF::Tick()
 					F->m_AtStand = 0;
 					F->m_pCarryingCharacter = apCloseCCharacters[i];
 					F->m_pCarryingCharacter->GetPlayer()->m_Score += 1;
-// maaa
-
 
 					char aBuf[256];
 					str_format(aBuf, sizeof(aBuf), "flag_grab player='%d:%s'",
 						F->m_pCarryingCharacter->GetPlayer()->GetCID(),
 						Server()->ClientName(F->m_pCarryingCharacter->GetPlayer()->GetCID()));
 					GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game", aBuf);
-					F->Reset();
+
 					for(int c = 0; c < MAX_CLIENTS; c++)
 					{
 						CPlayer *pPlayer = GameServer()->m_apPlayers[c];
 						if(!pPlayer)
 							continue;
 
-						//if(pPlayer->GetTeam() == TEAM_SPECTATORS && pPlayer->m_SpectatorID != SPEC_FREEVIEW && GameServer()->m_apPlayers[pPlayer->m_SpectatorID] && GameServer()->m_apPlayers[pPlayer->m_SpectatorID]->GetTeam() == fi)
-							//GameServer()->CreateSoundGlobal(SOUND_CTF_GRAB_EN, c);
-						//else if(pPlayer->GetTeam() == fi)
-							//GameServer()->CreateSoundGlobal(SOUND_CTF_GRAB_EN, c);
-						//else
-							//GameServer()->CreateSoundGlobal(SOUND_CTF_GRAB_PL, c);
+						if(pPlayer->GetTeam() == TEAM_SPECTATORS && pPlayer->m_SpectatorID != SPEC_FREEVIEW && GameServer()->m_apPlayers[pPlayer->m_SpectatorID] && GameServer()->m_apPlayers[pPlayer->m_SpectatorID]->GetTeam() == fi)
+							GameServer()->CreateSoundGlobal(SOUND_CTF_GRAB_EN, c);
+						else if(pPlayer->GetTeam() == fi)
+							GameServer()->CreateSoundGlobal(SOUND_CTF_GRAB_EN, c);
+						else
+							GameServer()->CreateSoundGlobal(SOUND_CTF_GRAB_PL, c);
 					}
 					// demo record entry
-					//GameServer()->CreateSoundGlobal(SOUND_CTF_GRAB_EN, -2);
+					GameServer()->CreateSoundGlobal(SOUND_CTF_GRAB_EN, -2);
 					break;
 				}
 			}
